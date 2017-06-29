@@ -45,6 +45,8 @@ Installation
 Source
 The source code is available here.
 
+### Current Build supports CSGO Linux. 
+
 
 Limitations / Known Issues / Notes
 
