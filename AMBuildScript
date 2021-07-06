@@ -154,6 +154,7 @@ class ExtensionConfig(object):
       '_stricmp=strcasecmp',
       '_snprintf=snprintf',
       '_vsnprintf=vsnprintf',
+      'HAVE_STRING_H',
       'HAVE_STDINT_H',
       'GNUC',
     ]

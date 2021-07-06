@@ -1,39 +1,28 @@
-# vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
-import os, sys
+import os.path
 
 projectName = 'collisionhook'
 
-# smsdk_ext.cpp will be automatically added later
-sourceFiles = [
-  'extension.cpp',
-  os.path.join(Extension.sm_root, 'public', 'asm', 'asm.c')
+project = Extension.HL2Project(builder, projectName + '.ext')
+project.sources += [
+    'extension.cpp',
+    os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp'),
+    os.path.join(Extension.sm_root, 'public', 'CDetour', 'detours.cpp'),
+    os.path.join(Extension.sm_root, 'public', 'asm', 'asm.c'),
 ]
 
-detour_games = ['l4d', 'l4d2', 'nucleardawn', 'css', 'tf2', 'sdk2013', 'dods', 'ep2', 'hl2dm', 'csgo']
+# sm1.10+
+libudis_folder = os.path.join(Extension.sm_root, 'public', 'libudis86')
+if os.path.isdir(libudis_folder):
+    project.sources += [
+        os.path.join(libudis_folder, 'decode.c'),
+        os.path.join(libudis_folder, 'itab.c'),
+        os.path.join(libudis_folder, 'syn-att.c'),
+        os.path.join(libudis_folder, 'syn-intel.c'),
+        os.path.join(libudis_folder, 'syn.c'),
+        os.path.join(libudis_folder, 'udis86.c'),
+    ]
 
-###############
-# Make sure to edit PackageScript, which copies your files to their appropriate locations
-# Simple extensions do not need to modify past this point.
+for sdk in Extension.sdks.values():
+    Extension.HL2Config(project, projectName + '.ext.2.' + sdk.ext, sdk)
 
-project = Extension.HL2Project(builder, projectName + '.ext')
-
-if os.path.isfile(os.path.join(builder.currentSourcePath, 'sdk', 'smsdk_ext.cpp')):
-  # Use the copy included in the project
-  project.sources += [os.path.join('sdk', 'smsdk_ext.cpp')]
-else:
-  # Use the copy included with SM 1.6 and newer
-  project.sources += [os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp')]
-
-project.sources += sourceFiles
-  
-for sdk_name in Extension.sdks:
-  if sdk_name == 'episode1':
-    continue
-  sdk = Extension.sdks[sdk_name]
-  
-  binary = Extension.HL2Config(project, projectName + '.ext.' + sdk.ext, sdk)
-
-  if builder.target_platform == 'linux' or sdk_name in detour_games:
-    binary.sources += [os.path.join(Extension.sm_root, 'public', 'CDetour', 'detours.cpp')]
-
-Extension.extensions = builder.Add(project)
+Extension.extensions += builder.Add(project)

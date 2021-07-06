@@ -81,7 +81,7 @@ bool CollisionHook::SDK_OnLoad( char *error, size_t maxlength, bool late )
 	char szConfError[ 256 ] = "";
 	if ( !gameconfs->LoadGameConfigFile( "collisionhook", &g_pGameConf, szConfError, sizeof( szConfError ) ) )
 	{
-		V_snprintf( error, maxlength, "Could not read collisionhook gamedata: %s", szConfError );
+		snprintf( error, maxlength,  "Could not read collisionhook gamedata: %s", szConfError );
 		return false;
 	}
 
@@ -90,7 +90,7 @@ bool CollisionHook::SDK_OnLoad( char *error, size_t maxlength, bool late )
 	g_pFilterDetour = DETOUR_CREATE_STATIC( PassServerEntityFilterFunc, "PassServerEntityFilter" );
 	if ( !g_pFilterDetour )
 	{
-		V_snprintf( error, maxlength, "Unable to hook PassServerEntityFilter!" );
+		snprintf( error, maxlength,  "Unable to hook PassServerEntityFilter!" );
 		return false;
 	}
 
