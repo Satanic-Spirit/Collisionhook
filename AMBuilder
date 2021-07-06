@@ -23,6 +23,6 @@ if os.path.isdir(libudis_folder):
     ]
 
 for sdk in Extension.sdks.values():
-    Extension.HL2Config(project, projectName + '.ext.2.' + sdk.ext, sdk)
+    Extension.HL2Config(project, projectName + '.ext.' + sdk.ext, sdk)
 
 Extension.extensions += builder.Add(project)
