@@ -1,8 +1,6 @@
 # vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
 import os, sys
 
-# Simple extensions do not need to modify this file.
-
 class SDK(object):
   def __init__(self, sdk, ext, aDef, name, platform, dir):
     self.folder = 'hl2sdk-' + dir
@@ -19,19 +17,10 @@ WinLinux = ['windows', 'linux']
 WinLinuxMac = ['windows', 'linux', 'mac']
 
 PossibleSDKs = {
-  'episode1':  SDK('HL2SDK', '1.ep1', '1', 'EPISODEONE', WinLinux, 'episode1'),
-  'ep2':  SDK('HL2SDKOB', '2.ep2', '3', 'ORANGEBOX', WinLinux, 'orangebox'),
-  'css':  SDK('HL2SDKCSS', '2.css', '6', 'CSS', WinLinuxMac, 'css'),
-  'hl2dm':  SDK('HL2SDKHL2DM', '2.hl2dm', '7', 'HL2DM', WinLinuxMac, 'hl2dm'),
-  'dods': SDK('HL2SDKDODS', '2.dods', '8', 'DODS', WinLinuxMac, 'dods'),
-  'sdk2013': SDK('HL2SDK2013', '2.sdk2013', '9', 'SDK2013', WinLinuxMac, 'sdk2013'),
+  'csgo': SDK('HL2SDKCSGO', '2.csgo', '20', 'CSGO', WinLinuxMac, 'csgo'),
   'tf2':  SDK('HL2SDKTF2', '2.tf2', '11', 'TF2', WinLinuxMac, 'tf2'),
   'l4d':  SDK('HL2SDKL4D', '2.l4d', '12', 'LEFT4DEAD', WinLinuxMac, 'l4d'),
-  'nucleardawn': SDK('HL2SDKND', '2.nd', '13', 'NUCLEARDAWN', WinLinuxMac, 'nucleardawn'),
   'l4d2': SDK('HL2SDKL4D2', '2.l4d2', '15', 'LEFT4DEAD2', WinLinuxMac, 'l4d2'),
-  'csgo': SDK('HL2SDKCSGO', '2.csgo', '20', 'CSGO', WinLinuxMac, 'csgo'),
-  'dota': SDK('HL2SDKDOTA', '2.dota', '21', 'DOTA', [], 'dota'),
-  'portal2':  SDK('HL2SDKPORTAL2', '2.portal2', '17', 'PORTAL2', [], 'portal2'),
 }
 
 def ResolveEnvPath(env, folder):
@@ -96,11 +85,15 @@ class ExtensionConfig(object):
     if builder.options.sm_path:
       self.sm_root = builder.options.sm_path
     else:
-      self.sm_root = ResolveEnvPath('SOURCEMOD18', 'sourcemod-1.8')
+      self.sm_root = ResolveEnvPath('SOURCEMOD111', 'sourcemod-1.11')
+      if not self.sm_root:
+        self.sm_root = ResolveEnvPath('SOURCEMOD110', 'sourcemod-1.10')
+      if not self.sm_root:
+        self.sm_root = ResolveEnvPath('SOURCEMOD19', 'sourcemod-1.9')
+      if not self.sm_root:
+        self.sm_root = ResolveEnvPath('SOURCEMOD18', 'sourcemod-1.8')
       if not self.sm_root:
         self.sm_root = ResolveEnvPath('SOURCEMOD', 'sourcemod')
-      if not self.sm_root:
-        self.sm_root = ResolveEnvPath('SOURCEMOD_DEV', 'sourcemod-central')
 
     if not self.sm_root or not os.path.isdir(self.sm_root):
       raise Exception('Could not find a source copy of SourceMod')
@@ -109,9 +102,15 @@ class ExtensionConfig(object):
     if builder.options.mms_path:
       self.mms_root = builder.options.mms_path
     else:
-      self.mms_root = ResolveEnvPath('MMSOURCE110', 'mmsource-1.10')
+      self.mms_root = ResolveEnvPath('MMSOURCE11', 'mmsource-1.11')
       if not self.mms_root:
-        self.mms_root = ResolveEnvPath('MMSOURCE', 'metamod-source')
+        self.mms_root = ResolveEnvPath('MMSOURCE11', 'metamod-1.11')
+      if not self.mms_root:
+        self.mms_root = ResolveEnvPath('MMSOURCE10', 'mmsource-1.10')
+      if not self.mms_root:
+        self.mms_root = ResolveEnvPath('MMSOURCE10', 'metamod-1.10')
+      if not self.mms_root:
+        self.mms_root = ResolveEnvPath('MMSOURCE_DEV', 'metamod-source')
       if not self.mms_root:
         self.mms_root = ResolveEnvPath('MMSOURCE_DEV', 'mmsource-central')
 
@@ -154,8 +153,8 @@ class ExtensionConfig(object):
       '_stricmp=strcasecmp',
       '_snprintf=snprintf',
       '_vsnprintf=vsnprintf',
-      'HAVE_STRING_H',
       'HAVE_STDINT_H',
+      'HAVE_STRING_H',
       'GNUC',
     ]
     cxx.cflags += [
@@ -171,7 +170,9 @@ class ExtensionConfig(object):
       '-fvisibility=hidden',
     ]
     cxx.cxxflags += [
-      '-std=c++11',
+      '-std=c++14',
+      '-fpermissive',
+      '-fno-rtti',
       '-fno-exceptions',
       '-fno-threadsafe-statics',
       '-Wno-non-virtual-dtor',
@@ -182,6 +183,8 @@ class ExtensionConfig(object):
 
     have_gcc = cxx.vendor == 'gcc'
     have_clang = cxx.vendor == 'clang'
+    if cxx.version >= 'clang-3.9' or cxx.version >= 'apple-clang-10.0':
+      cxx.cxxflags += ['-Wno-expansion-to-defined']
     if cxx.version >= 'clang-3.6':
       cxx.cxxflags += ['-Wno-inconsistent-missing-override']
     if have_clang or (cxx.version >= 'gcc-4.6'):
@@ -190,6 +193,8 @@ class ExtensionConfig(object):
       cxx.cxxflags += ['-Wno-delete-non-virtual-dtor']
     if cxx.version >= 'gcc-4.8':
       cxx.cflags += ['-Wno-unused-result']
+    if cxx.version >= 'gcc-8.0':
+      cxx.cxxflags += ['-Wno-class-memaccess']
 
     if have_clang:
       cxx.cxxflags += ['-Wno-implicit-exception-spec-mismatch']
@@ -198,6 +203,17 @@ class ExtensionConfig(object):
       else:
         cxx.cxxflags += ['-Wno-deprecated']
       cxx.cflags += ['-Wno-sometimes-uninitialized']
+      if cxx.version >= cxx.version >= 'apple-clang-3.0' or 'clang-2.9':
+        cxx.cxxflags += ['-Wno-null-dereference']
+      if cxx.version >= 'clang-3.9':
+        cxx.cxxflags += ['-Wno-expansion-to-defined']
+
+    # Work around SDK warnings.
+    if cxx.version >= 'clang-10.0':
+      cxx.cflags += [
+        '-Wno-implicit-int-float-conversion',
+        '-Wno-tautological-overlap-compare',
+      ]
 
     if have_gcc:
       cxx.cflags += ['-mfpmath=sse']
@@ -277,10 +293,8 @@ class ExtensionConfig(object):
   def ConfigureForExtension(self, context, compiler):
     compiler.cxxincludes += [
       os.path.join(context.currentSourcePath),
-      os.path.join(context.currentSourcePath, 'sdk'),
       os.path.join(self.sm_root, 'public'),
       os.path.join(self.sm_root, 'public', 'extensions'),
-	  os.path.join(self.sm_root, 'public', 'CDetour'),
       os.path.join(self.sm_root, 'sourcepawn', 'include'),
       os.path.join(self.sm_root, 'public', 'amtl', 'amtl'),
       os.path.join(self.sm_root, 'public', 'amtl'),
@@ -290,14 +304,9 @@ class ExtensionConfig(object):
   def ConfigureForHL2(self, binary, sdk):
     compiler = binary.compiler
 
-    if sdk.name == 'episode1':
-      mms_path = os.path.join(self.mms_root, 'core-legacy')
-    else:
-      mms_path = os.path.join(self.mms_root, 'core')
-
     compiler.cxxincludes += [
-      os.path.join(mms_path),
-      os.path.join(mms_path, 'sourcehook'),
+      os.path.join(self.mms_root, 'core'),
+      os.path.join(self.mms_root, 'core', 'sourcehook'),
     ]
 
     defines = ['SE_' + PossibleSDKs[i].define + '=' + PossibleSDKs[i].code for i in PossibleSDKs]
@@ -309,89 +318,55 @@ class ExtensionConfig(object):
       ['public', 'mathlib'],
       ['public', 'vstdlib'],
       ['public', 'tier0'],
-      ['public', 'tier1']
+      ['public', 'tier1'],
+      ['public', 'game', 'server'],
+      ['public', 'toolframework'],
+      ['game', 'shared'],
+      ['common']
     ]
-    if sdk.name == 'episode1' or sdk.name == 'darkm':
-      paths.append(['public', 'dlls'])
-      paths.append(['game_shared'])
-    else:
-      paths.append(['public', 'game', 'server'])
-      paths.append(['public', 'toolframework'])
-      paths.append(['game', 'shared'])
-      paths.append(['common'])
 
     compiler.defines += ['SOURCE_ENGINE=' + sdk.code]
 
-    if sdk.name in ['sdk2013', 'bms'] and compiler.like('gcc'):
-      # The 2013 SDK already has these in public/tier0/basetypes.h
-      compiler.defines.remove('stricmp=strcasecmp')
-      compiler.defines.remove('_stricmp=strcasecmp')
-      compiler.defines.remove('_snprintf=snprintf')
-      compiler.defines.remove('_vsnprintf=vsnprintf')
-
     if compiler.like('msvc'):
+      if compiler.version >= 1900:
+        compiler.linkflags += ['legacy_stdio_definitions.lib']
+      # https://developercommunity.visualstudio.com/t/msvc-142328019-is-missing-include-typeinfoh/734566#T-N752563
+      # https://qiita.com/yumetodo/items/8c112fca0a8e6b47072d
+      # let include local typeinfo.h which includes typeinfo
+      if compiler.version >= 1923:
+        compiler.cxxincludes += [os.path.join(builder.currentSourcePath, 'typeinfo_dbg')]
       compiler.defines += ['COMPILER_MSVC', 'COMPILER_MSVC32']
     else:
       compiler.defines += ['COMPILER_GCC']
 
-    # For everything after Swarm, this needs to be defined for entity networking
-    # to work properly with sendprop value changes.
-    if sdk.name in ['blade', 'insurgency', 'csgo', 'dota']:
-      compiler.defines += ['NETWORK_VARS_ENABLED']
-
-    if sdk.name in ['css', 'hl2dm', 'dods', 'sdk2013', 'bms', 'tf2', 'l4d', 'nucleardawn', 'l4d2', 'dota']:
-      if builder.target_platform in ['linux', 'mac']:
-        compiler.defines += ['NO_HOOK_MALLOC', 'NO_MALLOC_OVERRIDE']
-
-    if sdk.name == 'csgo' and builder.target_platform == 'linux':
-      compiler.linkflags += ['-lstdc++']
+    if builder.target_platform in ['linux', 'mac']:
+      compiler.defines += ['NO_HOOK_MALLOC', 'NO_MALLOC_OVERRIDE']
 
     for path in paths:
       compiler.cxxincludes += [os.path.join(sdk.path, *path)]
 
     if builder.target_platform == 'linux':
-      if sdk.name == 'episode1':
-        lib_folder = os.path.join(sdk.path, 'linux_sdk')
-      elif sdk.name in ['sdk2013', 'bms']:
-        lib_folder = os.path.join(sdk.path, 'lib', 'public', 'linux32')
-      else:
-        lib_folder = os.path.join(sdk.path, 'lib', 'linux')
+      lib_folder = os.path.join(sdk.path, 'lib', 'linux')
     elif builder.target_platform == 'mac':
-      if sdk.name in ['sdk2013', 'bms']:
-        lib_folder = os.path.join(sdk.path, 'lib', 'public', 'osx32')
-      else:
-        lib_folder = os.path.join(sdk.path, 'lib', 'mac')
+      lib_folder = os.path.join(sdk.path, 'lib', 'mac')
 
     if builder.target_platform in ['linux', 'mac']:
-      if sdk.name in ['sdk2013', 'bms']:
-        compiler.postlink += [
-          compiler.Dep(os.path.join(lib_folder, 'tier1.a')),
-          compiler.Dep(os.path.join(lib_folder, 'mathlib.a'))
-        ]
-      else:
-        compiler.postlink += [
-          compiler.Dep(os.path.join(lib_folder, 'tier1_i486.a')),
-          compiler.Dep(os.path.join(lib_folder, 'mathlib_i486.a'))
-        ]
-
-      if sdk.name in ['blade', 'insurgency', 'csgo', 'dota']:
-        compiler.postlink += [compiler.Dep(os.path.join(lib_folder, 'interfaces_i486.a'))]
+      compiler.postlink += [
+        compiler.Dep(os.path.join(lib_folder, 'tier1_i486.a')),
+        compiler.Dep(os.path.join(lib_folder, 'mathlib_i486.a')),
+      ]
 
     dynamic_libs = []
     if builder.target_platform == 'linux':
-      if sdk.name in ['css', 'hl2dm', 'dods', 'tf2', 'sdk2013', 'bms', 'nucleardawn', 'l4d2', 'insurgency']:
+      if sdk.name == 'l4d2':
         dynamic_libs = ['libtier0_srv.so', 'libvstdlib_srv.so']
-      elif sdk.name in ['l4d', 'blade', 'insurgency', 'csgo', 'dota']:
-        dynamic_libs = ['libtier0.so', 'libvstdlib.so']
       else:
-        dynamic_libs = ['tier0_i486.so', 'vstdlib_i486.so']
+        dynamic_libs = ['libtier0.so', 'libvstdlib.so']
     elif builder.target_platform == 'mac':
       compiler.linkflags.append('-liconv')
       dynamic_libs = ['libtier0.dylib', 'libvstdlib.dylib']
     elif builder.target_platform == 'windows':
       libs = ['tier0', 'tier1', 'vstdlib', 'mathlib']
-      if sdk.name in ['swarm', 'blade', 'insurgency', 'csgo', 'dota']:
-        libs.append('interfaces')
       for lib in libs:
         lib_path = os.path.join(sdk.path, 'lib', 'public', lib) + '.lib'
         compiler.linkflags.append(compiler.Dep(lib_path))
@@ -407,7 +382,7 @@ class ExtensionConfig(object):
         return link
 
       linker = make_linker(source_path, output_path)
-      compiler.linkflags[0:0] = [compiler.Dep(library, linker)]
+      compiler.linkflags.append(compiler.Dep(library, linker))
 
     return binary
 
@@ -439,4 +414,4 @@ if builder.backend == 'amb2':
     'PackageScript',
   ]
 
-builder.RunBuildScripts(BuildScripts, { 'Extension': Extension})
+builder.RunBuildScripts(BuildScripts, { 'Extension': Extension })
