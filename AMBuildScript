@@ -295,6 +295,7 @@ class ExtensionConfig(object):
       os.path.join(context.currentSourcePath),
       os.path.join(self.sm_root, 'public'),
       os.path.join(self.sm_root, 'public', 'extensions'),
+      os.path.join(self.sm_root, 'public', 'CDetour'),
       os.path.join(self.sm_root, 'sourcepawn', 'include'),
       os.path.join(self.sm_root, 'public', 'amtl', 'amtl'),
       os.path.join(self.sm_root, 'public', 'amtl'),
